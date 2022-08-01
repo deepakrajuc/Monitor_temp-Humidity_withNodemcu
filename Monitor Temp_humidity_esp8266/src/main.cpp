@@ -26,6 +26,7 @@
 
 #include <InfluxDbClient.h>
 #include <InfluxDbCloud.h>
+#include "Arduino.h"
 
 // WiFi AP SSID
 #define WIFI_SSID "JioFi3_726C0F"
@@ -53,11 +54,17 @@ InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKE
 // InfluxDB client instance without preconfigured InfluxCloud certificate for insecure connection 
 //InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN);
 
+
+#define sensor_pin A0
+ int dataValue = 0;
+
 // Data point
 Point sensor("wifi_status");
 
 void setup() {
   Serial.begin(115200);
+
+  pinMode(sensor_pin, INPUT);
 
   // Setup wifi
   WiFi.mode(WIFI_STA);
@@ -72,7 +79,7 @@ void setup() {
 
   // Add tags
   sensor.addTag("device", DEVICE);
-  sensor.addTag("SSID", WiFi.SSID());
+  sensor.addTag("SSID", WiFi.SSID() );
 
   // Alternatively, set insecure connection to skip server certificate validation 
   //client.setInsecure();
@@ -94,9 +101,14 @@ void setup() {
 
 void loop() {
   // Store measured value into point
+    dataValue = analogRead(sensor_pin);
+    dataValue = map(dataValue, 0, 1024, 0,255);
+    Serial.println("value of sensor");
+    Serial.println(dataValue);
+
   sensor.clearFields();
   // Report RSSI of currently connected network
-  sensor.addField("rssi", WiFi.RSSI());
+  sensor.addField("analogVal",dataValue);
   // Print what are we exactly writing
   Serial.print("Writing: ");
   Serial.println(client.pointToLineProtocol(sensor));
@@ -111,6 +123,6 @@ void loop() {
   }
 
   //Wait 10s
-  Serial.println("Wait 10s");
-  delay(10000);
+  Serial.println("Wait 5s");
+  delay(5000);
 }
